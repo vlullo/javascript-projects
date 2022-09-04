@@ -5,32 +5,25 @@ const fetchButton = document.querySelector("#available-posts button");
 const postList = document.querySelector("ul");
 
 function sendHttpRequest(method, url, data) {
-  const promise = new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    //xhr.setRequestHeader("Content-Type", "application/json");
-
-    xhr.open(method, url);
-
-    xhr.onload = function () {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(xhr.response);
+  //The fetch API returns a promise
+  return fetch(url, {
+    method: method,
+    body: JSON.stringify(data),
+    header: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => {
+      if (response.status >= 200 && response.status < 300) {
+        return response.json();
       } else {
-        reject(new Error("Something went wrong!"));
+        throw new Error("Something went wrong - server-side.");
       }
-    };
-
-    xhr.onerror = function () {
-      /*
-      Error handing when there is a network error 
-      (eg. if the request failed to be sent or it does timeout) 
-      */
-      reject(new Error("Failed to send request!"));
-    };
-
-    xhr.send(JSON.stringify(data));
-  });
-
-  return promise;
+    })
+    .catch((error) => {
+      console.log(error);
+      throw new Error("Something went wrong!");
+    });
 }
 
 async function fetchPosts() {
@@ -39,8 +32,7 @@ async function fetchPosts() {
       "GET",
       "https://jsonplaceholder.typicode.com/posts"
     );
-    const listOfPosts = JSON.parse(responseData);
-    for (const post of listOfPosts) {
+    for (const post of responseData) {
       const postEl = document.importNode(postTemplate.content, true);
       postEl.querySelector("h2").textContent = post.title.toUpperCase();
       postEl.querySelector("p").textContent = post.body;
